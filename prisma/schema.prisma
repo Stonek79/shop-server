@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  email     String   @unique
+  nickname  String?  @unique
+  password  String
+  role      Role     @default(USER)
+  orders    Order[]
+  profile   Profile?
+}
+
+model Profile {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  gender    Gender?
+  firstname String
+  lastname  String?
+  surname   String?
+  phone     String
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Product {
+  id                 String            @id @default(cuid())
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
+  title              String
+  descrition         String
+  color              String[]
+  size               String[]
+  price              Int
+  currency           String?
+  discountPercentage Int?
+  rating             Int?
+  stock              Int
+  inStock            Boolean?
+  brand              String?
+  category           String[]
+  thumbnail          String
+  images             String[]
+  onSale             Boolean?
+  onTop              Boolean?
+  characteristics    Characteristics[]
+  orders             OrderToProduct[]
+}
+
+model Characteristics {
+  id                 String   @id @default(cuid())
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+  productId          String
+  brandName          String?
+  origin             String?
+  material           String?
+  gender             String?
+  style              String?
+  fabricTexture      String?
+  productType        String?
+  decorativeElements String?
+  fit                String?
+  length             String?
+  fabricDensity      String?
+  closureType        String?
+  fitType            String?
+  unitOfMeasurement  String?
+  quantity           Int?
+  product            Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id        String           @id @default(cuid())
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+  userId    String
+  status    OrderStatus      @default(PENDING)
+  user      User             @relation(fields: [userId], references: [id])
+  products  OrderToProduct[]
+  shipment  Shipment?
+}
+
+model OrderToProduct {
+  orderId   String
+  productId String
+  order     Order   @relation(fields: [orderId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@id([orderId, productId])
+}
+
+model Shipment {
+  id             String         @id @default(cuid())
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  orderId        String         @unique
+  shippedDate    DateTime?
+  deliveredDate  DateTime?
+  trackingNumber String?
+  status         ShipmentStatus
+  order          Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum OrderStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ShipmentStatus {
+  SHIPPED
+  IN_TRANSIT
+  DELIVERED
+  RETURNED
+}
